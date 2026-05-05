@@ -15,11 +15,10 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 # Обработчик /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    # Сохраняем пользователя
     sb.table("users").upsert({
         "user_id": user.id,
         "username": user.username,
-        "source": "organic",  # или можно передать параметр
+        "source": "organic",
         "segment": "cold",
         "created_at": datetime.utcnow().isoformat()
     }).execute()
@@ -29,7 +28,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     text = update.message.text
-    # Упрощённо: сохраняем в лиды
     sb.table("leads").insert({
         "user_id": user.id,
         "name": user.full_name,
@@ -41,7 +39,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "created_at": datetime.utcnow().isoformat()
     }).execute()
 
-    # Проверяем/создаём funnel_state
     state = sb.table("funnel_state").select("*").eq("user_id", user.id).execute()
     if not state.data:
         sb.table("funnel_state").insert({
@@ -54,7 +51,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("Ты уже в воронке. Жди следующих шагов.")
 
-# Команда /segment — назначить сегмент (для теста)
+# Команда /segment — назначить сегмент
 async def set_segment_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text("Укажи сегмент: /segment warm")
